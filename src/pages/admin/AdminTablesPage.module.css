@@ -1,0 +1,14 @@
+.page { padding: 2rem; max-width: 700px; margin: 0 auto; color: #eee; }
+.title { margin-bottom: 1.5rem; }
+.newForm { display: flex; gap: 0.6rem; margin-bottom: 1.5rem; }
+.input { padding: 0.5rem; border-radius: 6px; border: 1px solid #333; background: #0f1626; color: white; flex: 1; }
+.addButton { background: #4ecca3; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 600; }
+.list { display: flex; flex-direction: column; gap: 0.6rem; }
+.table { display: flex; align-items: center; gap: 1rem; background: #16213e; padding: 0.7rem 1rem; border-radius: 8px; }
+.tableNum { font-weight: 600; min-width: 100px; }
+.token { font-family: monospace; font-size: 0.75rem; color: #999; flex: 1; overflow: hidden; text-overflow: ellipsis; }
+.active { color: #4ecca3; }
+.inactive { color: #e94560; }
+.actions { display: flex; gap: 0.5rem; }
+.deleteButton { background: transparent; border: 1px solid #e94560; color: #e94560; padding: 0.35rem 0.7rem; border-radius: 6px; cursor: pointer; }
+.note { margin-top: 1.5rem; color: #999; font-size: 0.85rem; }
