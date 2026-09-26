@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react'
 import api from '../../api'
+import TableQrModal from '../TableQrModal'
+import AllTablesQrModal from '../AllTablesQrModal'
 import styles from './AdminTablesPage.module.css'
 
 export default function AdminTablesPage() {
   const [tables, setTables] = useState([])
   const [loading, setLoading] = useState(true)
   const [newTableNumber, setNewTableNumber] = useState('')
+  const [qrModalTable, setQrModalTable] = useState(null)
+  const [showAllQr, setShowAllQr] = useState(false)
 
   const fetchTables = async () => {
     try {
@@ -49,25 +53,18 @@ export default function AdminTablesPage() {
     }
   }
 
-  const [qrModalTable, setQrModalTable] = useState(null);
-
-// μέσα στη λίστα/table row:
-<button onClick={() => setQrModalTable(table)}>QR Code</button>
-
-// στο τέλος του JSX:
-{qrModalTable && (
-  <TableQrModal
-    tableId={qrModalTable.id}
-    tableLabel={`Τραπέζι ${qrModalTable.number}`}  // προσάρμοσε στο field που έχεις
-    onClose={() => setQrModalTable(null)}
-  />
-)}
-
   if (loading) return <div className={styles.page}>Φόρτωση τραπεζιών...</div>
 
   return (
     <div className={styles.page}>
-      <h1 className={styles.title}>Διαχείριση Τραπεζιών</h1>
+      <div className={styles.headerRow}>
+        <h1 className={styles.title}>Διαχείριση Τραπεζιών</h1>
+        {tables.length > 0 && (
+          <button onClick={() => setShowAllQr(true)} className={styles.printAllButton}>
+            🖨️ Εκτύπωση Όλων των QR
+          </button>
+        )}
+      </div>
 
       <form className={styles.newForm} onSubmit={handleAddTable}>
         <input type="number" placeholder="Αριθμός τραπεζιού" value={newTableNumber}
@@ -84,6 +81,7 @@ export default function AdminTablesPage() {
               {table.active ? 'Ενεργό' : 'Ανενεργό'}
             </span>
             <div className={styles.actions}>
+              <button onClick={() => setQrModalTable(table)}>QR Code</button>
               <button onClick={() => handleToggleActive(table.id)}>
                 {table.active ? 'Απενεργοποίηση' : 'Ενεργοποίηση'}
               </button>
@@ -95,7 +93,20 @@ export default function AdminTablesPage() {
         ))}
       </div>
 
-      <p className={styles.note}>📌 Το QR code generation (εικόνα/εκτύπωση) είναι το επόμενο βήμα.</p>
+      {qrModalTable && (
+        <TableQrModal
+          tableId={qrModalTable.id}
+          tableLabel={`Τραπέζι ${qrModalTable.tableNumber}`}
+          onClose={() => setQrModalTable(null)}
+        />
+      )}
+
+      {showAllQr && (
+        <AllTablesQrModal
+          tables={tables}
+          onClose={() => setShowAllQr(false)}
+        />
+      )}
     </div>
   )
 }

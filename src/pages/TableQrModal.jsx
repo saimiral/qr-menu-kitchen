@@ -1,32 +1,28 @@
-import { useEffect, useState } from 'react';
-import './TableQrModal.css';
-
-const API_BASE = 'http://localhost:8080';
+import { useEffect, useState } from 'react'
+import api from '../api'
+import './TableQrModal.css'
 
 export default function TableQrModal({ tableId, tableLabel, onClose }) {
-  const [imgUrl, setImgUrl] = useState(null);
-  const [error, setError] = useState(null);
+  const [imgUrl, setImgUrl] = useState(null)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
-    let objectUrl;
+    let objectUrl
     const fetchQr = async () => {
       try {
-        const token = localStorage.getItem('qrder_token');
-        const res = await fetch(
-          `${API_BASE}/api/admin/tables/${tableId}/qr-code?size=600`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        if (!res.ok) throw new Error('Αποτυχία φόρτωσης QR code');
-        const blob = await res.blob();
-        objectUrl = URL.createObjectURL(blob);
-        setImgUrl(objectUrl);
+        const res = await api.get(`/admin/tables/${tableId}/qr-code`, {
+          params: { size: 600 },
+          responseType: 'blob',
+        })
+        objectUrl = URL.createObjectURL(res.data)
+        setImgUrl(objectUrl)
       } catch (err) {
-        setError(err.message);
+        setError('Αποτυχία φόρτωσης QR code')
       }
-    };
-    fetchQr();
-    return () => { if (objectUrl) URL.revokeObjectURL(objectUrl); };
-  }, [tableId]);
+    }
+    fetchQr()
+    return () => { if (objectUrl) URL.revokeObjectURL(objectUrl) }
+  }, [tableId])
 
   return (
     <div className="qr-modal-overlay">
@@ -44,5 +40,5 @@ export default function TableQrModal({ tableId, tableLabel, onClose }) {
         </div>
       </div>
     </div>
-  );
+  )
 }
