@@ -39,35 +39,59 @@ export default function KitchenPage({ storeSlug }) {
     }
   }, [storeSlug])
 
-  // SSE σύνδεση
-  useEffect(() => {
-    fetchOrders()
+ // SSE σύνδεση
+useEffect(() => {
+  fetchOrders()
 
-    const token = localStorage.getItem('qrder_token')
-    const es = new EventSource(`http://localhost:8080/api/orders/kitchen/${storeSlug}/stream?token=${token}`)
-    eventSourceRef.current = es
+  let es = null
+  let retryTimer = null
+  let cancelled = false
 
-    es.addEventListener('new-order', (e) => {
-      const newOrder = JSON.parse(e.data)
-      setOrders(prev => {
-        const exists = prev.find(o => o.id === newOrder.id)
-        if (exists) return prev
-        return [newOrder, ...prev]
+  const connect = async () => {
+    try {
+      // 1) Ζητάμε βραχύβιο ticket μιας χρήσης (το κανονικό JWT πάει στο header, όχι στο URL)
+      const { data } = await api.post('/auth/sse-token')
+      if (cancelled) return
+
+      // 2) Ανοίγουμε το stream με το ticket
+      es = new EventSource(
+        `${api.defaults.baseURL}/orders/kitchen/${storeSlug}/stream?token=${encodeURIComponent(data.token)}`
+      )
+      eventSourceRef.current = es
+
+      es.addEventListener('new-order', (e) => {
+        const newOrder = JSON.parse(e.data)
+        setOrders(prev => {
+          const exists = prev.find(o => o.id === newOrder.id)
+          if (exists) return prev
+          return [newOrder, ...prev]
+        })
+        setLastUpdate(new Date())
+        audioRef.current?.play().catch(() => {})
       })
-      setLastUpdate(new Date())
-      // Ήχος ειδοποίησης
-      audioRef.current?.play().catch(() => {})
-    })
 
-    es.onopen = () => setConnected(true)
-    es.onerror = () => {
+      es.onopen = () => setConnected(true)
+      es.onerror = () => {
+        setConnected(false)
+        es.close() // το ticket είναι μιας χρήσης, δεν αφήνουμε τον browser να κάνει auto-reconnect
+        if (!cancelled) {
+          retryTimer = setTimeout(() => { fetchOrders(); connect() }, 3000)
+        }
+      }
+    } catch (e) {
       setConnected(false)
-      // Retry μετά από 3 δευτερόλεπτα
-      setTimeout(fetchOrders, 3000)
+      if (!cancelled) retryTimer = setTimeout(connect, 3000)
     }
+  }
 
-    return () => es.close()
-  }, [storeSlug, fetchOrders])
+  connect()
+
+  return () => {
+    cancelled = true
+    clearTimeout(retryTimer)
+    es?.close()
+  }
+}, [storeSlug, fetchOrders])
 
   const updateStatus = async (orderId, newStatus) => {
     try {
