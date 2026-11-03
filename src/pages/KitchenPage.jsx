@@ -70,6 +70,17 @@ useEffect(() => {
         audioRef.current?.play().catch(() => {})
       })
 
+      es.addEventListener('order-updated', (e) => {
+        const updated = JSON.parse(e.data)
+        setOrders(prev => {
+          const exists = prev.some(o => o.id === updated.id)
+          return exists
+            ? prev.map(o => o.id === updated.id ? updated : o)
+            : [updated, ...prev]
+        })
+        setLastUpdate(new Date())
+      })
+
       es.onopen = () => setConnected(true)
       es.onerror = () => {
         setConnected(false)
